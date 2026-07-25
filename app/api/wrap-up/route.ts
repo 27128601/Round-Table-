@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { PLAN_SYSTEM, AGENTS } from '@/lib/prompts';
-import { callWithRetry, hasNonChineseScript, translateBackstop, SONNET_MODEL } from '@/lib/anthropic';
-import type { Lang } from '@/lib/i18n';
+import { callWithRetry, needsZhBackstop, translateBackstop, SONNET_MODEL } from '@/lib/anthropic';
+import { ZH_INSTRUCTION, NO_MD_INSTRUCTION, type Lang } from '@/lib/i18n';
 
 // Wrap-up execution plan (§12, carried over unchanged). This is the "final
 // output" of a session and does NOT count against the 15-message rate limit
@@ -40,14 +40,15 @@ export async function POST(request: Request) {
   }
 
   try {
+    const system = PLAN_SYSTEM + (lang === 'zh' ? ZH_INSTRUCTION : NO_MD_INSTRUCTION);
     const { text } = await callWithRetry({
       model: SONNET_MODEL,
-      system: PLAN_SYSTEM,
+      system,
       userContent: `Idea: "${session.idea_text}"\n\nFull discussion:\n${parts.join('\n\n')}`,
       maxTokens: 600,
     });
     let planText = text;
-    if (lang === 'zh' && hasNonChineseScript(planText)) planText = await translateBackstop(planText);
+    if (lang === 'zh' && needsZhBackstop(planText)) planText = await translateBackstop(planText);
 
     const out = { title: 'Execution plan', steps: [] as string[], risk: '', validate: '' };
     planText.split('\n').map((l) => l.trim()).filter(Boolean).forEach((l) => {

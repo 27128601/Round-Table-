@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { t, type Lang } from '@/lib/i18n';
 import { convertFile, type FileConvertError } from '@/lib/fileConvert';
 import MicButton from '@/components/MicButton';
+import TrinityStage from '@/components/TrinityStage';
+import StepTracker from '@/components/StepTracker';
 
 const FILE_ERROR_KEY: Record<FileConvertError, Parameters<typeof t>[1]> = {
   too_large: 'errFile',
@@ -142,6 +144,9 @@ export default function NewSessionPage() {
         <h1>{t(lang, 'h1')}</h1>
         <p className="subtitle">{t(lang, 'subtitle')}</p>
       </header>
+
+      <TrinityStage lang={lang} />
+      <StepTracker lang={lang} currentStepId="describe" />
 
       <div className="panel">
         <div className="field-with-mic">

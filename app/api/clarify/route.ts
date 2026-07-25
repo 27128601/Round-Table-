@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { CLARIFY_SYSTEM } from '@/lib/prompts';
-import { callWithRetry, HAIKU_MODEL } from '@/lib/anthropic';
+import { callWithRetry, needsZhBackstop, translateBackstop, HAIKU_MODEL } from '@/lib/anthropic';
+import { ZH_INSTRUCTION, type Lang } from '@/lib/i18n';
 
 function parseClarify(text: string): string[] {
   if (/SUFFICIENT/i.test(text)) return [];
@@ -25,10 +26,11 @@ export async function POST(request: Request) {
   const { sessionId } = (await request.json()) as { sessionId: string };
   const { data: session } = await supabase
     .from('sessions')
-    .select('idea_text, attachments')
+    .select('idea_text, attachments, lang')
     .eq('id', sessionId)
     .single();
   if (!session) return NextResponse.json({ error: 'not_found' }, { status: 404 });
+  const lang: Lang = session.lang === 'zh' ? 'zh' : 'en';
 
   const attachmentsText = (session.attachments as { name: string; markdown: string }[] | null || [])
     .map((a) => `Attached notes (${a.name}):\n${a.markdown}`)
@@ -36,13 +38,18 @@ export async function POST(request: Request) {
   const fullBrief = [session.idea_text, attachmentsText].filter(Boolean).join('\n\n');
 
   try {
+    const system = CLARIFY_SYSTEM + (lang === 'zh' ? ZH_INSTRUCTION : '');
     const { text } = await callWithRetry({
       model: HAIKU_MODEL,
-      system: CLARIFY_SYSTEM,
+      system,
       userContent: `The founder's brief:\n\n"${fullBrief}"`,
       maxTokens: 220,
     });
-    return NextResponse.json({ questions: parseClarify(text) });
+    let finalText = text;
+    if (lang === 'zh' && needsZhBackstop(finalText) && !/^SUFFICIENT/i.test(finalText.trim())) {
+      finalText = await translateBackstop(finalText);
+    }
+    return NextResponse.json({ questions: parseClarify(finalText) });
   } catch {
     // If the clarify check itself fails, don't block the flow — run as-is.
     return NextResponse.json({ questions: [] });

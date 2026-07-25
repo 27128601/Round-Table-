@@ -2,8 +2,21 @@
 
 import { t, type Lang } from '@/lib/i18n';
 import type { PlanRow } from '@/lib/types';
+import CopyButton from './CopyButton';
 
 export default function PlanCard({ plan, lang }: { plan: PlanRow; lang: Lang }) {
+  function planText() {
+    const lines = [
+      plan.title || '',
+      '',
+      ...plan.steps.map((s, i) => `${i + 1}. ${s}`),
+      '',
+      plan.risk ? `Biggest risk: ${plan.risk}` : '',
+      plan.validate ? `Validate first: ${plan.validate}` : '',
+    ];
+    return lines.filter(Boolean).join('\n');
+  }
+
   return (
     <div className="plan-card">
       <div className="rec-tag" style={{ marginBottom: 10 }}>{t(lang, 'planTag')}</div>
@@ -13,6 +26,9 @@ export default function PlanCard({ plan, lang }: { plan: PlanRow; lang: Lang }) 
       ))}
       {plan.risk && <div className="plan-foot"><b>{t(lang, 'planRisk')}</b> {plan.risk}</div>}
       {plan.validate && <div className="plan-foot"><b>{t(lang, 'planValidate')}</b> {plan.validate}</div>}
+      <div className="plan-copy-row" style={{ marginTop: 12 }}>
+        <CopyButton getText={planText} lang={lang} labelKey="copyPlan" />
+      </div>
     </div>
   );
 }

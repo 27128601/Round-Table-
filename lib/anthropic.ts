@@ -16,6 +16,7 @@ export function webSearchTool(maxUses = 5) {
     type: 'web_search_20260318' as const,
     name: 'web_search' as const,
     max_uses: maxUses,
+    allowed_callers: ['direct'] as ('direct' | 'code_execution_20250825' | 'code_execution_20260120' | 'code_execution_20260521')[],
   };
 }
 
@@ -108,7 +109,23 @@ export function hasNonChineseScript(text: string) {
   return NON_ZH_SCRIPT_RE.test(text || '');
 }
 
-const TRANSLATE_SYSTEM = `You are a translator. Translate the user's text into natural Simplified Chinese (简体中文). CRITICAL RULES: (1) Preserve EXACTLY, unchanged and in English, any structural label at the start of a line (e.g. SUMMARY:, RECOMMENDATION:, TACTIC:, TITLE:, STEP:, RISK:, VALIDATE:, Q:, SUFFICIENT). (2) Preserve all numbers, the "•" bullet character, and line breaks exactly. (3) Translate everything else into Simplified Chinese. (4) Output ONLY the translated text, nothing else, no preamble.`;
+// Detects actual Han characters. hasNonChineseScript() alone only catches
+// Korean/Japanese leakage — it does nothing if the model just answers in
+// plain English, which passes that check with flying colors. Any zh-mode
+// output must be checked against BOTH: no Korean/Japanese AND has real
+// Chinese content.
+const HAN_RE = /[一-鿿]/;
+export function hasChineseScript(text: string) {
+  return HAN_RE.test(text || '');
+}
+
+// The single check every zh-mode call site should use before deciding
+// whether to run the translation backstop.
+export function needsZhBackstop(text: string) {
+  return hasNonChineseScript(text) || !hasChineseScript(text);
+}
+
+const TRANSLATE_SYSTEM = `You are a translator. Translate the user's text into natural Simplified Chinese (简体中文). CRITICAL RULES: (1) Preserve EXACTLY, unchanged and in English, any structural label at the start of a line (e.g. SUMMARY:, RECOMMENDATION:, TACTIC:, TITLE:, STEP:, RISK:, VALIDATE:, Q:, SUFFICIENT). (2) Preserve all numbers, the "•" bullet character, and line breaks exactly. (3) Leave any SCORE: or CONFIDENCE: line completely untouched, label and value both, exactly as given (CONFIDENCE: stays LOW/MEDIUM/HIGH in English). (4) Translate everything else into Simplified Chinese. (5) Output ONLY the translated text, nothing else, no preamble.`;
 
 export async function translateBackstop(text: string): Promise<string> {
   try {

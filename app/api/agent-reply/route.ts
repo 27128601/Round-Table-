@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { chargeMessage, rateLimitResponseBody } from '@/lib/rateLimit';
 import { AGENTS, directReplySystem } from '@/lib/prompts';
-import { callWithRetry, hasNonChineseScript, translateBackstop, HAIKU_MODEL } from '@/lib/anthropic';
-import type { Lang } from '@/lib/i18n';
+import { callWithRetry, needsZhBackstop, translateBackstop, HAIKU_MODEL } from '@/lib/anthropic';
+import { ZH_INSTRUCTION, NO_MD_INSTRUCTION, type Lang } from '@/lib/i18n';
 
 interface ReplyBody {
   sessionId: string;
@@ -33,14 +33,15 @@ export async function POST(request: Request) {
 
   let replyText = '';
   try {
+    const system = directReplySystem(agent) + (lang === 'zh' ? ZH_INSTRUCTION : NO_MD_INSTRUCTION);
     const { text } = await callWithRetry({
       model: HAIKU_MODEL,
-      system: directReplySystem(agent),
+      system,
       userContent: `Idea: "${session.idea_text}"\n\nYour earlier statement:\n${body.agentRecentText}\n\nThe founder says to you:\n${body.founderMessage}`,
       maxTokens: 300,
     });
     replyText = text;
-    if (lang === 'zh' && hasNonChineseScript(replyText)) replyText = await translateBackstop(replyText);
+    if (lang === 'zh' && needsZhBackstop(replyText)) replyText = await translateBackstop(replyText);
   } catch (err) {
     return NextResponse.json({ error: (err as Error).message, messageCount: charge.messageCount }, { status: 502 });
   }

@@ -30,7 +30,7 @@ export const AGENTS: Agent[] = [
 • Demand reality: challenge whether people actually want this — what real behaviour suggests, not what people say (1 tight sentence)
 • Analogue: a real product that tried something similar and what happened to it
 • Signal: what that analogue implies here — and the cheapest way to test demand next
-If a shared research context is provided above, ground your points in it and cite the specific source inline next to the claim it supports (e.g. a link or named outlet) — cite only claims that benefit from a source, no minimum count.`,
+If a shared research context is provided above, ground your points in it and cite the specific source inline next to the claim it supports (e.g. a link or named outlet) — cite only claims that benefit from a source, no minimum count. Never narrate that you are searching or about to search (no "I'll look up...", "Let me search...", or similar) — go straight to "SUMMARY:" as the very first thing you output, with any finding already woven in.`,
   },
   {
     id: 'builder',
@@ -41,7 +41,7 @@ If a shared research context is provided above, ground your points in it and cit
 • Hardest problem: the single hardest thing to build here and why (specific, not generic)
 • Risk: the technical or product risk most likely to kill this, with a real example of it sinking something similar
 • MVP cut: one concrete simplification that ships a testable version in under 4 weeks
-If a shared research context is provided above, ground your points in it and cite the specific source inline next to the claim it supports — cite only claims that benefit from a source, no minimum count.`,
+If a shared research context is provided above, ground your points in it and cite the specific source inline next to the claim it supports — cite only claims that benefit from a source, no minimum count. Never narrate that you are searching or about to search (no "I'll look up...", "Let me search...", or similar) — go straight to "SUMMARY:" as the very first thing you output, with any finding already woven in.`,
   },
   {
     id: 'investor',
@@ -52,7 +52,7 @@ If a shared research context is provided above, ground your points in it and cit
 • Opportunity & timing: the real strategic opportunity and why now is (or isn't) the moment, grounded in a comparable example (1 tight sentence)
 • The pitch: the one line that would make a genuine investor pause — or the story risk that would make them pass
 • Critical assumption: the one assumption that must be true for this to be fundable — and the quickest way to test it
-If a shared research context is provided above, ground your points in it and cite the specific source inline next to the claim it supports — cite only claims that benefit from a source, no minimum count.`,
+If a shared research context is provided above, ground your points in it and cite the specific source inline next to the claim it supports — cite only claims that benefit from a source, no minimum count. Never narrate that you are searching or about to search (no "I'll look up...", "Let me search...", or similar) — go straight to "SUMMARY:" as the very first thing you output, with any finding already woven in.`,
   },
 ];
 
@@ -80,6 +80,8 @@ export const GROUNDING_SYSTEM = `You gather current, credible grounding context 
 export const ALIGNMENT_SYSTEM = `You read a debate between three role-specialized advisors — Market, Builder, and Investor — reacting to a founder's idea. They may genuinely disagree. Your job is to produce ONE shared recommendation: the direction the three roles converge on, explicitly resolving or weighing their disagreement (don't paper over real conflict — say what you're weighing and why you land where you land). Output in this EXACT format with these literal labels:
 RECOMMENDATION: [2-3 sentences: the one shared direction, explicitly naming what disagreement it resolves or how it weighs conflicting views]
 WHY: [1-2 sentences on why this is the right synthesis, referencing the strongest point from at least two of the three roles]
+SCORE: [an integer 1-99 rating where this idea currently sits versus typical early-stage startup ideas the table has seen — below 40 means weak/unproven, 40-69 means plausible but unvalidated, 70+ means strong signal]
+CONFIDENCE: [exactly one of LOW, MEDIUM, HIGH — how sure the table is in that SCORE given the evidence so far]
 Be concrete and decisive — the founder needs one clear direction, not a hedge. No asterisks, no extra text, no markdown.`;
 
 // ---------------------------------------------------------------------------
@@ -87,7 +89,7 @@ Be concrete and decisive — the founder needs one clear direction, not a hedge.
 // recommendation — a genuine second pass, not a template fill.
 // ---------------------------------------------------------------------------
 export function tacticsInstruction(agent: Agent): string {
-  return `You are ${agent.label} again. The table has just converged on a shared recommendation (given above). Respond IN SUPPORT of that shared direction — from your role's specific angle, tell the founder what matters most and your concrete tactics for pursuing it. This is a genuine second pass: weight or frame the shared direction the way your role actually would, don't just restate it. First line: "SUMMARY: " followed by one punchy sentence. Then 2-3 bullet points using the bullet character, each a concrete, specific tactic (not a restatement of the recommendation). You may search the web if a specific, checkable claim about the recommendation or your tactics would benefit from a current example, named comparable, or statistic — prioritize primary sources over forums/unverified opinion, and cite inline next to the claim it supports. No asterisks, no markdown.`;
+  return `You are ${agent.label} again. The table has just converged on a shared recommendation (given above). Respond IN SUPPORT of that shared direction — from your role's specific angle, tell the founder what matters most and your concrete tactics for pursuing it. This is a genuine second pass: weight or frame the shared direction the way your role actually would, don't just restate it. First line: "SUMMARY: " followed by one punchy sentence. Then 2-3 bullet points using the bullet character, each a concrete, specific tactic (not a restatement of the recommendation). You may search the web if a specific, checkable claim about the recommendation or your tactics would benefit from a current example, named comparable, or statistic — prioritize primary sources over forums/unverified opinion, and cite inline next to the claim it supports. Never narrate that you are searching or about to search (no "I'll look up...", "Let me search...", or similar) — go straight to "SUMMARY:" with the finding already woven in. No asterisks, no markdown.`;
 }
 
 // ---------------------------------------------------------------------------

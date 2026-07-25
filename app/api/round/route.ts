@@ -4,7 +4,7 @@ import {
   AGENTS, AgentId, GROUNDING_SYSTEM, ALIGNMENT_SYSTEM, tacticsInstruction,
   agentReactionInstruction,
 } from '@/lib/prompts';
-import { buildCachedSystemBlocks, callWithRetry, hasNonChineseScript, translateBackstop, HAIKU_MODEL, SONNET_MODEL, Source } from '@/lib/anthropic';
+import { buildCachedSystemBlocks, callWithRetry, needsZhBackstop, translateBackstop, HAIKU_MODEL, SONNET_MODEL, Source } from '@/lib/anthropic';
 import type { Lang } from '@/lib/i18n';
 
 export const maxDuration = 60; // Vercel function timeout — see plan §"Core pipeline" for why this needs raising
@@ -28,7 +28,7 @@ function ndjson(obj: unknown) {
 }
 
 async function localize(text: string, lang: Lang): Promise<string> {
-  if (lang === 'zh' && hasNonChineseScript(text)) {
+  if (lang === 'zh' && needsZhBackstop(text)) {
     return translateBackstop(text);
   }
   return text;
@@ -147,6 +147,7 @@ export async function POST(request: Request) {
             initialResults[idx] = result;
             send({ event: 'initial-take', ...result });
           } catch (err) {
+            console.error('[initial-take failed]', agent.id, err);
             const result: AgentStepResult = { agentId: agent.id, status: 'failed', error: (err as Error).message };
             initialResults[idx] = result;
             send({ event: 'initial-take', ...result });
@@ -225,6 +226,7 @@ export async function POST(request: Request) {
             tacticsResults[idx] = result;
             send({ event: 'tactics', ...result });
           } catch (err) {
+            console.error('[tactics failed]', agent.id, err);
             const result: AgentStepResult = { agentId: agent.id, status: 'failed', error: (err as Error).message };
             tacticsResults[idx] = result;
             send({ event: 'tactics', ...result });

@@ -63,6 +63,7 @@ export const STR = {
   planValidate: { en: 'Validate first:', zh: '优先验证：' },
   copyPlan: { en: '⧉ Copy plan', zh: '⧉ 复制计划' },
   copy: { en: '⧉ Copy', zh: '⧉ 复制' },
+  copyFull: { en: '⧉ Copy full conversation', zh: '⧉ 复制完整对话' },
   copied: { en: '✓ Copied', zh: '✓ 已复制' },
   copyFail: { en: 'Copy failed', zh: '复制失败' },
   downloadPdf: { en: '⬇ Download PDF report', zh: '⬇ 下载 PDF 报告' },
@@ -97,6 +98,20 @@ export const STR = {
   totalFailure: { en: "The table couldn't reach a recommendation this time — no message was used. Try again?", zh: '本次圆桌未能得出建议——未消耗一条消息额度。要重试吗？' },
   stepFailed: { en: "{n}'s response failed to load — retry?", zh: '{n}的回应加载失败——重试？' },
   retry: { en: 'Retry', zh: '重试' },
+  zoneLow: { en: 'Below most ideas', zh: '低于多数想法' },
+  zoneMid: { en: 'Middle of the pack', zh: '处于中游' },
+  zoneHigh: { en: 'Above most ideas', zh: '优于多数想法' },
+  confLow: { en: 'low confidence', zh: '置信度：低' },
+  confMed: { en: 'medium confidence', zh: '置信度：中' },
+  confHigh: { en: 'high confidence', zh: '置信度：高' },
+  mark: { en: '⚑ Mark', zh: '⚑ 标记' },
+  marked: { en: '⚑ Marked', zh: '⚑ 已标记' },
+  returnHere: { en: '↩ Return here', zh: '↩ 回到此处' },
+  confirmReturn: { en: 'Delete everything after this point and continue from here?', zh: '删除此点之后的全部内容并从这里继续？' },
+  curveTip: {
+    en: 'Where the table places this idea against typical early-stage startup ideas, and how sure it is — a gauge to guide iteration, not a verdict.',
+    zh: '圆桌将这个想法与典型早期创业想法相比的大致位置及其把握程度——供迭代参考，并非最终评判。',
+  },
 } as const;
 
 export type StrKey = keyof typeof STR;
@@ -117,6 +132,6 @@ Do NOT switch to English at any point, not even for a single word or clause insi
 
 When you refer to the other agents, use their Chinese names ONLY: 市场 (Market), 构建者 (Builder), 投资人 (Investor). Never write "Market", "Builder" or "Investor" in English.
 
-The ONLY things allowed in English are the bare structural labels at the very start of a line (e.g. SUMMARY:, RECOMMENDATION:, TACTIC:, TITLE:, STEP:, RISK:, VALIDATE:, Q:, SUFFICIENT). Write these labels EXACTLY as shown — plain, with NO markdown. Everything after each label must be Simplified Chinese.`;
+The ONLY things allowed in English are the bare structural labels at the very start of a line (e.g. SUMMARY:, RECOMMENDATION:, TACTIC:, TITLE:, STEP:, RISK:, VALIDATE:, Q:, SUFFICIENT) and, for SCORE:/CONFIDENCE: lines specifically, the entire line stays in English exactly as instructed (a bare integer for SCORE:, and exactly one of LOW/MEDIUM/HIGH for CONFIDENCE:) — never translate these two lines. Write all other labels EXACTLY as shown — plain, with NO markdown. Everything after each other label must be Simplified Chinese.`;
 
 export const NO_MD_INSTRUCTION = `\n\nFORMAT: Output plain text only. Do NOT use markdown — no "#" or "##" headers, no asterisks, no bold. Write each structural label bare at the start of its line with nothing before it.`;

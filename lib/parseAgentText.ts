@@ -14,7 +14,21 @@ export interface ParsedAgentText {
 }
 
 export function parseAgentText(text: string): ParsedAgentText {
-  const cleaned = stripAsterisks(text || '');
+  let cleaned = stripAsterisks(text || '');
+
+  // Defense-in-depth: if the model narrated ("I'll search for...") before
+  // "SUMMARY:" on the SAME line instead of starting fresh with it, cut
+  // everything before "SUMMARY:" so the preamble never reaches the UI.
+  const midLineMatch = cleaned.match(/SUMMARY:/i);
+  if (midLineMatch && midLineMatch.index !== undefined && midLineMatch.index > 0) {
+    const before = cleaned.slice(0, midLineMatch.index);
+    // Only cut if this doesn't already look like a clean line start (i.e. the
+    // stuff before it isn't just whitespace/newlines — a real preamble).
+    if (before.trim().length > 0 && !/\n\s*$/.test(before)) {
+      cleaned = cleaned.slice(midLineMatch.index);
+    }
+  }
+
   const lines = cleaned.split('\n').map((l) => l.trim()).filter(Boolean);
   let summary = '';
   const bodyLines: string[] = [];

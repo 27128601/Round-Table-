@@ -3,9 +3,46 @@
 import { useState } from 'react';
 import AgentBadge, { agentLabel } from './AgentBadge';
 import { parseAgentText, renderBullets } from '@/lib/parseAgentText';
+import { splitSentences } from '@/lib/splitSentences';
 import type { Source } from '@/lib/anthropic';
 import type { Lang } from '@/lib/i18n';
 import { t } from '@/lib/i18n';
+
+function HighlightableText({ text, idPrefix, onQuote }: { text: string; idPrefix: string; onQuote?: (text: string) => void }) {
+  const [highlighted, setHighlighted] = useState<Set<number>>(new Set());
+  const sentences = splitSentences(text);
+
+  return (
+    <>
+      {sentences.map((s, i) => (
+        <span className="sentence-wrap" key={`${idPrefix}-${i}`}>
+          <span
+            className={`sentence${highlighted.has(i) ? ' sentence-hl' : ''}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              setHighlighted((prev) => {
+                const next = new Set(prev);
+                if (next.has(i)) next.delete(i); else next.add(i);
+                return next;
+              });
+            }}
+          >
+            {s}
+          </span>
+          {onQuote && (
+            <button
+              className="quote-btn"
+              title="Quote this in a reply"
+              onClick={(e) => { e.stopPropagation(); onQuote(s.trim()); }}
+            >
+              &ldquo;
+            </button>
+          )}
+        </span>
+      ))}
+    </>
+  );
+}
 
 interface Props {
   agentId: string;
@@ -27,7 +64,7 @@ export default function AgentMessage({ agentId, text, sources, error, lang, onRe
     return (
       <div className="msg">
         <div className="msg-head">
-          <AgentBadge agentId={agentId} />
+          <AgentBadge agentId={agentId} lang={lang} />
           <span className="msg-summary">{t(lang, 'stepFailed', { n: agentLabel(agentId, lang) })}</span>
         </div>
       </div>
@@ -36,6 +73,15 @@ export default function AgentMessage({ agentId, text, sources, error, lang, onRe
 
   const { summary, bulletLines } = parseAgentText(text);
   const bullets = renderBullets(bulletLines);
+
+  function quoteInReply(quoted: string) {
+    if (!onReply) return;
+    setThreadOpen(true);
+    setDraft((prev) => {
+      const prefix = `"${quoted}" — `;
+      return prev.startsWith(prefix) ? prev : prefix + prev;
+    });
+  }
 
   async function send() {
     const val = draft.trim();
@@ -51,8 +97,17 @@ export default function AgentMessage({ agentId, text, sources, error, lang, onRe
   return (
     <div className={`msg${open ? ' open' : ''}${threadOpen ? ' thread-open' : ''}`}>
       <div className="msg-head" onClick={() => setOpen((v) => !v)}>
-        <AgentBadge agentId={agentId} />
+        <AgentBadge agentId={agentId} lang={lang} />
         <span className="msg-summary">{summary}</span>
+        {onReply && (
+          <button
+            className="quote-btn quote-btn-summary"
+            title="Quote this in a reply"
+            onClick={(e) => { e.stopPropagation(); quoteInReply(summary); }}
+          >
+            &ldquo;
+          </button>
+        )}
         {onReply && (
           <button
             className="reply-btn"
@@ -69,7 +124,9 @@ export default function AgentMessage({ agentId, text, sources, error, lang, onRe
           {bullets.map((b, i) => (
             <div className="bullet" key={i}>
               {b.label ? <span className="bullet-label">{b.label}</span> : null}
-              <span className={b.label ? 'bullet-body' : 'bullet-full'}>{b.body}</span>
+              <span className={b.label ? 'bullet-body' : 'bullet-full'}>
+                <HighlightableText text={b.body} idPrefix={`${agentId}-b${i}`} onQuote={onReply ? quoteInReply : undefined} />
+              </span>
             </div>
           ))}
           {sources && sources.length > 0 && (

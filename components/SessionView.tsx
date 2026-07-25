@@ -7,11 +7,17 @@ import type { AgentId } from '@/lib/prompts';
 import type { Source } from '@/lib/anthropic';
 import RoundBlock from './RoundBlock';
 import AgentMessage from './AgentMessage';
+import BellCurve from './BellCurve';
+import CopyButton from './CopyButton';
+import { parseAlignment } from '@/lib/parseAlignment';
+import { buildTranscript } from '@/lib/buildTranscript';
 import { agentLabel } from './AgentBadge';
 import HumanTurnCard from './HumanTurnCard';
 import ChoiceCard from './ChoiceCard';
 import PlanCard from './PlanCard';
 import RateLimitBanner from './RateLimitBanner';
+import TrinityStage from './TrinityStage';
+import StepTracker from './StepTracker';
 
 type Stage = 'grounding' | 'initial' | 'alignment' | 'tactics' | 'done';
 
@@ -55,6 +61,8 @@ export default function SessionView({ initial, autoStart }: { initial: SessionDe
   const [humanQuestions, setHumanQuestions] = useState<{ agentId: string; question: string }[] | null>(null);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [markedRounds, setMarkedRounds] = useState<Set<string>>(new Set());
+  const [rollingBack, setRollingBack] = useState(false);
   const startedRef = useRef(false);
   const askedRef = useRef(false);
 
@@ -166,6 +174,27 @@ export default function SessionView({ initial, autoStart }: { initial: SessionDe
     await refetchDetail();
   }
 
+  function toggleMark(roundId: string) {
+    setMarkedRounds((prev) => {
+      const next = new Set(prev);
+      if (next.has(roundId)) next.delete(roundId); else next.add(roundId);
+      return next;
+    });
+  }
+
+  async function rollbackTo(roundId: string) {
+    if (busy || rollingBack) return;
+    if (!confirm(t(lang, 'confirmReturn'))) return;
+    setRollingBack(true);
+    await fetchJson('/api/rollback', { sessionId, roundId });
+    askedRef.current = false;
+    setHumanQuestions(null);
+    setLiveRound(null);
+    setMarkedRounds(new Set());
+    await refetchDetail();
+    setRollingBack(false);
+  }
+
   async function downloadPdf() {
     setGeneratingPdf(true);
     const res = await fetch('/api/pdf', {
@@ -210,6 +239,12 @@ export default function SessionView({ initial, autoStart }: { initial: SessionDe
     && (latest.kind === 'reaction' || latest.kind === 'standalone') && latest.alignment_status !== 'not_attempted';
   const showManualStart = !liveRound && !humanQuestions && !loadingQuestions && rounds.length === 0 && !autoStart;
 
+  let currentStepId = 'describe';
+  if (detail.plans.length > 0) currentStepId = 'wrap';
+  else if (rounds.some((r) => r.kind === 'reaction') || liveRound?.kind === 'reaction') currentStepId = 'react';
+  else if (humanQuestions || loadingQuestions) currentStepId = 'turn';
+  else if (rounds.length > 0 || liveRound) currentStepId = 'debate';
+
   return (
     <div className="wrap">
       <header>
@@ -218,11 +253,21 @@ export default function SessionView({ initial, autoStart }: { initial: SessionDe
           <button className={`lang-btn${lang === 'zh' ? ' on' : ''}`} onClick={() => changeLang('zh')}>中文</button>
         </div>
         <div className="eyebrow">{t(lang, 'eyebrow')}</div>
+        <p className="tagline">{t(lang, 'h1')}</p>
         <h1 style={{ fontSize: 20 }}>{detail.session.title}</h1>
         <p className="subtitle">{detail.session.idea_text}</p>
       </header>
 
+      <TrinityStage lang={lang} />
+      <StepTracker lang={lang} currentStepId={currentStepId} />
+
       {rateLimited && <RateLimitBanner lang={lang} />}
+
+      {rounds.length > 0 && (
+        <div className="btn-row">
+          <CopyButton getText={() => buildTranscript(detail)} lang={lang} labelKey="copyFull" />
+        </div>
+      )}
 
       {showManualStart && (
         <div className="btn-row"><button className="btn" onClick={() => runRound('initial')}>{t(lang, 'seat')}</button></div>
@@ -230,7 +275,15 @@ export default function SessionView({ initial, autoStart }: { initial: SessionDe
 
       {rounds.map((r) => (
         <RoundDivider key={r.id} label={roundLabel(r, lang)}>
-          <RoundBlock round={r} lang={lang} onReply={handleReply} />
+          <RoundBlock
+            round={r}
+            lang={lang}
+            onReply={handleReply}
+            marked={markedRounds.has(r.id)}
+            checkpointDisabled={busy || rollingBack}
+            onToggleMark={() => toggleMark(r.id)}
+            onReturnHere={() => rollbackTo(r.id)}
+          />
         </RoundDivider>
       ))}
 
@@ -309,12 +362,18 @@ function LiveRoundView({ live, lang }: { live: LiveRound; lang: Lang }) {
         <div className="status-line"><div className="spinner" />{t(lang, 'stAligning')}</div>
       )}
 
-      {live.alignmentText && (
-        <div className="rec-card">
-          <div className="rec-top"><span className="rec-tag">{t(lang, 'recTag')}</span></div>
-          <div className="rec-text">{live.alignmentText}</div>
-        </div>
-      )}
+      {live.alignmentText && (() => {
+        const { displayText, score, confidence } = parseAlignment(live.alignmentText);
+        return (
+          <div className="rec-card">
+            <div className="rec-top">
+              <span className="rec-tag">{t(lang, 'recTag')}</span>
+              {score !== null && confidence !== null && <BellCurve score={score} confidence={confidence} lang={lang} />}
+            </div>
+            <div className="rec-text">{displayText}</div>
+          </div>
+        );
+      })()}
 
       {live.stage === 'tactics' && (
         <div className="tactics-list">
