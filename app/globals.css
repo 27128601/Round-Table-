@@ -1,7 +1,8 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg: #f7f6f3;
+  --bg: #E7E4DD; /* cool-toned paper, just barely warmer than the reference texture */
+  --paper: #E7E4DD;
   --surface: #ffffff;
   --ink: #16151a;
   --ink-soft: #5a5862;
@@ -15,74 +16,44 @@
   --stage-2: #0e0f1a;
   --glow: #8ea8ff;
 
-  /* Market / Builder / Investor palette (Investor absorbs the old Visionary + Storyteller slots) */
+  /* Hand-drawn ink tone for rough.js strokes and sketch linework */
+  --sketch-ink: #3E5B78;
+
+  /* Chunky rounded display fonts (headlines only) — loaded via next/font in app/layout.tsx */
+  --font-display: var(--font-display-en), "Fredoka", sans-serif;
+  --font-display-zh: var(--font-display-zh), "ZCOOL KuaiLe", sans-serif;
+
+  /* 5-agent palette (unchanged — reused as accent tokens for illustration fills too) */
+  --vn-bg: #EEEDFE; --vn-color: #3C3489; --vn-border: #AFA9EC; --vn-solid:#6A5BD4;
   --mk-bg: #FAEEDA; --mk-color: #633806; --mk-border: #EF9F27; --mk-solid:#D98412;
   --bd-bg: #E1F5EE; --bd-color: #085041; --bd-border: #5DCAA5; --bd-solid:#1F9B78;
-  --iv-bg: #EEEDFE; --iv-color: #3C3489; --iv-border: #AFA9EC; --iv-solid:#6A5BD4;
+  --op-bg: #FAECE7; --op-color: #712B13; --op-border: #F0997B; --op-solid:#D85F3C;
+  --st-bg: #E6F1FB; --st-color: #0C447C; --st-border: #85B7EB; --st-solid:#2B7BD4;
   --rec-bg: #f2f0ea; --rec-color: #2C2C2A; --rec-border: #c9c6bb;
 }
 
-/* ---------- Trinity stage ---------- */
-.stage-shell { margin: 26px 0 0; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--line); }
-.stage {
-  position: relative; width: 100%; aspect-ratio: 16 / 10;
-  background: radial-gradient(ellipse 80% 70% at 50% 38%, var(--stage-1), var(--stage-2) 75%);
-  overflow: hidden;
-}
-.stage-beam {
-  position: absolute; top: -4%; left: 50%; transform: translateX(-50%);
-  width: 30%; height: 58%;
-  background: linear-gradient(to bottom, rgba(170,190,255,0.28), rgba(170,190,255,0));
-  clip-path: polygon(38% 0, 62% 0, 100% 100%, 0 100%);
-  filter: blur(5px);
-  pointer-events: none;
-}
-.trinity-lines { position: absolute; inset: 0; }
-.trinity-lines line { stroke: rgba(170,190,255,0.22); stroke-width: 1; }
-.trinity-glow {
-  position: absolute; left: 50%; top: 48%; transform: translate(-50%,-50%);
-  width: 10%; aspect-ratio: 1; border-radius: 50%;
-  background: radial-gradient(circle, #fff, #acc0ff 40%, transparent 70%);
-  filter: blur(3px); opacity: 0.5;
-}
-.node {
-  position: absolute; transform: translate(-50%,-50%);
-  display: flex; flex-direction: column; align-items: center; gap: 6px;
-  transition: all 0.4s ease; z-index: 3; cursor: help;
-}
-.node-avatar {
-  width: 46px; height: 46px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 15px; font-weight: 650; color: #fff;
-  border: 2px solid rgba(255,255,255,0.25);
-  box-shadow: 0 4px 14px rgba(0,0,0,0.4);
-  transition: all 0.35s ease; position: relative;
-}
-.node-label {
-  font-size: 10px; font-weight: 600; letter-spacing: 0.03em;
-  color: rgba(255,255,255,0.75); text-transform: uppercase;
-}
-.node.active .node-avatar {
-  transform: scale(1.16);
-  box-shadow: 0 0 0 4px rgba(170,190,255,0.25), 0 0 26px var(--glow);
-  border-color: rgba(255,255,255,0.8);
-}
-.node.active .node-label { color: #fff; }
-.node-avatar .pulse-ring { position: absolute; inset: -2px; border-radius: 50%; border: 2px solid var(--glow); opacity: 0; }
-.node.active .node-avatar .pulse-ring { animation: ring 1.4s ease-out infinite; }
-@keyframes ring { 0% { opacity: 0.7; transform: scale(1); } 100% { opacity: 0; transform: scale(1.5); } }
-.node-human .node-avatar {
-  width: 42px; height: 42px; font-size: 12px;
-  background: linear-gradient(135deg,#f5f5f7,#d4d4dc); color: #333;
-  border-color: rgba(255,255,255,0.6);
-}
+/* ---------- Round-table hero illustration ---------- */
+/* Static illustrated hero (all 5 advisors at the table) replacing the old
+   rough.js sketch diagram — see round-table feedback: "replace the current
+   diagram". Background already cut out to transparent, so it sits directly
+   on the page's paper texture instead of boxed in its own panel. */
+.hero-table-wrap { margin: 26px 0 0; display: flex; justify-content: center; }
+.hero-table-img { width: 100%; height: auto; max-width: 720px; }
 
 html { height: 100%; }
 html, body { max-width: 100vw; overflow-x: hidden; }
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  background: var(--bg);
+  background-color: var(--bg);
+  /* real scanned paper-fiber texture, tiled — replaces the old procedural
+     SVG noise. Illustrations (hero image, mascot icons) have transparent
+     backgrounds so they sit directly on this texture; content boxes
+     (.surface-based cards) stay solid white so the grain never shows
+     through actual text. */
+  background-image: url("/textures/paper.jpg");
+  background-repeat: repeat;
+  background-size: 420px auto;
   color: var(--ink);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
@@ -96,6 +67,24 @@ a { color: inherit; text-decoration: none; }
 /* ---------- Auth shell ---------- */
 .auth-shell { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
 .auth-card { width: 100%; max-width: 380px; background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--radius); padding: 32px; }
+/* Auth card already sits on white (--surface), so the tile behind the logo
+   uses the paper tone instead — otherwise a white tile on a white card
+   would be invisible. */
+.brand-logo-auth-tile {
+  display: flex; flex-direction: row; align-items: center; justify-content: flex-start;
+  gap: 10px; width: fit-content; flex-shrink: 0;
+  background: rgba(231,228,221,0.5); border: 1px solid var(--line-strong);
+  border-radius: 16px; padding: 10px 16px; margin: 0 0 14px;
+}
+.brand-logo-auth { height: 42px; width: auto; max-width: 100%; object-fit: contain; display: block; flex-shrink: 0; }
+.brand-logo-auth-text { display: flex; flex-direction: column; gap: 1px; }
+.brand-logo-auth-name {
+  font-family: var(--font-display); font-size: 14.5px; font-weight: 650;
+  letter-spacing: -0.005em; color: var(--ink); text-align: left; white-space: nowrap;
+}
+.brand-logo-auth-slogan {
+  font-size: 10.5px; font-style: italic; color: var(--ink-soft); white-space: nowrap;
+}
 .auth-title { font-size: 22px; font-weight: 650; margin-bottom: 6px; }
 .auth-sub { font-size: 13.5px; color: var(--ink-soft); margin-bottom: 22px; }
 .auth-field { margin-bottom: 14px; }
@@ -152,76 +141,50 @@ a { color: inherit; text-decoration: none; }
 
 /* ---------- Header ---------- */
 header { padding: 44px 0 8px; position: relative; }
-.eyebrow { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; text-transform: none; color: var(--ink); margin-bottom: 12px; }
-h1 { font-size: 30px; font-weight: 650; letter-spacing: -0.025em; line-height: 1.15; margin-bottom: 10px; }
+/* The mark alone isn't legible as a logo — no wordmark on the image itself.
+   Pair it with the name in a horizontal lockup: icon left, name right,
+   both inside one light rounded card. */
+.brand-logo-tile {
+  display: flex; flex-direction: row; align-items: center; justify-content: flex-start;
+  gap: 12px; width: 100%; flex-shrink: 0;
+  background: rgba(255,255,255,0.5); border: 1px solid var(--line-strong);
+  border-radius: 18px; padding: 12px 20px; margin: 0 0 14px;
+  box-shadow: 0 1px 4px rgba(20,18,28,0.06);
+}
+.brand-logo { height: 52px; width: auto; max-width: 100%; object-fit: contain; display: block; flex-shrink: 0; }
+.brand-logo-text { display: flex; flex-direction: column; gap: 2px; }
+/* Lives inside the tile now, pinned to the top-right corner — level with
+   the top of the wordmark/logo rather than floating above the box. */
+.lang-toggle { position: static; margin-left: auto; align-self: flex-start; display: flex; gap: 4px; }
+.brand-logo-name {
+  font-family: var(--font-display); font-size: 17px; font-weight: 650;
+  letter-spacing: -0.005em; color: var(--ink); text-align: left; white-space: nowrap;
+}
+.brand-logo-slogan {
+  font-size: 11.5px; font-style: italic; color: var(--ink-soft); white-space: nowrap;
+}
+/* Small brand label, not a second heading — restored to the original
+   prototype's subtle treatment (was blown up to a bold 20px line, which is
+   what "everything is bold" was about). The chunky display font stays on h1,
+   the actual headline. */
+.eyebrow { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 12px; font-weight: 600; }
+h1 { font-family: var(--font-display); font-size: 28px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.25; margin-bottom: 10px; }
+/* The founder's own idea text, shown back to them on the session page —
+   styled like the input box it came from (bordered, contained, plain
+   weight) instead of a shouty heading, since it's their words, not ours. */
+.idea-recap {
+  font-size: 15px; line-height: 1.6; color: var(--ink-soft); font-weight: 400;
+  background: var(--bg); border: 1px solid var(--line-strong); border-radius: var(--radius);
+  padding: 13px 16px; margin: 14px 0 0; min-height: 0; resize: none; cursor: default;
+}
 .subtitle { font-size: 15px; color: var(--ink-soft); line-height: 1.6; max-width: 540px; }
 .tagline { font-size: 15px; color: var(--ink-soft); font-weight: 500; margin-bottom: 4px; }
 
-.lang-toggle { position: absolute; top: 44px; right: 0; display: flex; gap: 4px; }
+/* Chinese copy: swap to the rounded ZH display font wherever this is applied */
+:lang(zh) h1, .font-zh { font-family: var(--font-display-zh); }
+
 .lang-btn { font-size: 11.5px; padding: 5px 11px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--surface); cursor: pointer; color: var(--ink-soft); font-family: inherit; }
 .lang-btn.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
-@media (max-width: 560px){ .lang-toggle { position: static; margin-bottom: 12px; } }
-
-/* ---------- Stage / round table ---------- */
-.stage-shell { margin: 26px 0 0; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--line); }
-.stage {
-  position: relative; width: 100%; aspect-ratio: 16 / 9;
-  background: radial-gradient(ellipse 80% 70% at 50% 42%, var(--stage-1), var(--stage-2) 75%);
-  overflow: hidden;
-}
-.beam {
-  position: absolute; top: -4%; left: 50%; transform: translateX(-50%);
-  width: 26%; height: 62%;
-  background: linear-gradient(to bottom, rgba(170,190,255,0.28), rgba(170,190,255,0));
-  clip-path: polygon(38% 0, 62% 0, 100% 100%, 0 100%);
-  filter: blur(5px); pointer-events: none;
-}
-.table-top {
-  position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
-  width: 46%; aspect-ratio: 1.7/1; border-radius: 50%;
-  background: radial-gradient(circle at 50% 45%, #2b2f4a, #14162400 70%),
-              radial-gradient(circle at 50% 50%, #5b6cc4 0%, #2a2f55 30%, #0d0f1c 65%);
-  box-shadow: 0 10px 40px rgba(0,0,0,0.5), inset 0 0 30px rgba(120,140,255,0.3);
-  border: 1px solid rgba(150,170,255,0.25);
-}
-.table-glow {
-  position: absolute; left: 50%; top: 50%; transform: translate(-50%,-55%);
-  width: 8%; aspect-ratio: 1; border-radius: 50%;
-  background: radial-gradient(circle, #fff, #acc0ff 40%, transparent 70%);
-  filter: blur(2px);
-}
-.node { position: absolute; transform: translate(-50%,-50%); display: flex; flex-direction: column; align-items: center; gap: 6px; transition: all 0.4s ease; z-index: 3; }
-.node-avatar {
-  width: 46px; height: 46px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-  font-size: 15px; font-weight: 650; color: #fff; border: 2px solid rgba(255,255,255,0.25);
-  box-shadow: 0 4px 14px rgba(0,0,0,0.4); transition: all 0.35s ease; position: relative;
-}
-.node-label { font-size: 10px; font-weight: 600; letter-spacing: 0.03em; color: rgba(255,255,255,0.55); text-transform: uppercase; transition: color 0.35s ease; }
-.node.active .node-avatar { transform: scale(1.16); box-shadow: 0 0 0 4px rgba(170,190,255,0.25), 0 0 26px var(--glow); border-color: rgba(255,255,255,0.8); }
-.node.active .node-label { color: #fff; }
-.node.done .node-avatar { opacity: 0.92; }
-.node.idle .node-avatar { opacity: 0.5; filter: saturate(0.6); }
-.node-avatar .pulse-ring { position: absolute; inset: -2px; border-radius: 50%; border: 2px solid var(--glow); opacity: 0; }
-.node.active .node-avatar .pulse-ring { animation: ring 1.4s ease-out infinite; }
-@keyframes ring { 0%{ opacity:0.7; transform:scale(1);} 100%{ opacity:0; transform:scale(1.5);} }
-.node-human .node-avatar { width: 50px; height: 50px; background: linear-gradient(135deg,#f5f5f7,#d4d4dc); color: #333; border-color: rgba(255,255,255,0.6); }
-.node .node-tip {
-  position: absolute; bottom: calc(100% + 10px); left: 50%; transform: translateX(-50%);
-  width: 210px; max-width: 210px; background: #fff; color: var(--ink);
-  border: 1px solid var(--line-strong); border-radius: 10px; padding: 10px 12px;
-  font-size: 11.5px; line-height: 1.5; box-shadow: 0 10px 30px rgba(0,0,0,.4);
-  opacity: 0; pointer-events: none; transition: opacity .15s; z-index: 30; text-align: left;
-}
-.node.tip-below .node-tip { bottom: auto; top: calc(100% + 10px); }
-.node.tip-left .node-tip { left: 0; transform: none; }
-.node.tip-right .node-tip { left: auto; right: 0; transform: none; }
-.node .node-tip b { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; display: block; margin-bottom: 3px; }
-.node .node-tip .tip-stat { display: block; margin-top: 5px; color: var(--ink-soft); font-size: 11px; font-style: italic; }
-.node:hover .node-tip { opacity: 1; }
-
-.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 10px; font-size: 11.5px; color: var(--ink-soft); }
-.legend b { font-weight: 650; color: var(--ink); }
-.ldot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
 
 /* ---------- Inputs ---------- */
 .panel { margin-top: 22px; }
@@ -285,36 +248,45 @@ textarea::placeholder { color: var(--ink-faint); }
 .rd-btn.marked { background: var(--ink); color: var(--surface); border-color: var(--ink); }
 .rd-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* ---------- Checkpoint toolbar (mark / rollback) ---------- */
-.checkpoint-bar { display: flex; gap: 8px; margin-bottom: 12px; }
-.checkpoint-btn {
-  font-size: 12.5px; font-weight: 600; border: 1.5px solid var(--line-strong); background: var(--surface);
-  color: var(--ink-soft); border-radius: 20px; padding: 7px 15px; cursor: pointer; font-family: inherit;
-  display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s;
-}
-.checkpoint-flag { font-size: 12px; }
-.checkpoint-btn:hover { color: var(--ink); border-color: #888; }
-.checkpoint-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-.checkpoint-bar.marked .checkpoint-btn:first-child { background: #fff2d6; color: #8a5a00; border-color: #e8b84b; }
-.checkpoint-return { background: #fcebeb; color: #a32d2d; border-color: #f09595; }
-.checkpoint-return:hover { background: #f7d9d9; color: #8a2323; border-color: #d97070; }
-
-/* ---------- Sentence highlighting ---------- */
-.sentence { cursor: pointer; border-radius: 3px; transition: background-color 0.12s; }
-.sentence:hover { background: rgba(217,132,18,0.16); }
-.sentence-hl { background: #ffe27a; box-shadow: 0 0 0 1px #f0c542; }
-.sentence-hl:hover { background: #ffd94d; }
-.sentence-wrap { position: relative; }
+/* ---------- Quote buttons ---------- */
 .quote-btn {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 16px; height: 16px; margin-left: 1px; border-radius: 4px; border: none;
-  background: rgba(90,88,98,0.12); color: var(--ink-soft); font-size: 11px; line-height: 1;
-  cursor: pointer; opacity: 0; transition: opacity 0.12s; vertical-align: middle; font-family: inherit;
+  border-radius: 8px; border: none; background: rgba(90,88,98,0.12); color: var(--ink-soft);
+  cursor: pointer; transition: opacity 0.12s, background 0.12s, color 0.12s; vertical-align: middle; font-family: inherit;
 }
-.sentence-wrap:hover .quote-btn { opacity: 1; }
 .quote-btn:hover { background: var(--ink); color: var(--surface); }
-.quote-btn-summary { opacity: 0.55; flex-shrink: 0; }
+/* Made deliberately large per feedback — the old 16px glyph was too small
+   to register as a clickable control at a glance. */
+.quote-btn-summary {
+  width: 34px; height: 34px; font-size: 26px; line-height: 1; opacity: 0.85; flex-shrink: 0;
+}
 .quote-btn-summary:hover { opacity: 1; }
+
+/* Floating icon toolbar above an arbitrary text selection inside a message
+   body — two distinct, single-purpose actions (a highlighter-pen icon that
+   only marks the text yellow, and a quote icon that only quotes the exact
+   selected snippet into the reply — different from the header's quote
+   button, which always quotes the whole summary line) — instead of a fixed
+   per-sentence button that reserved layout space (which used to create
+   visible gaps). */
+.select-toolbar {
+  position: absolute; transform: translate(-50%, -130%);
+  display: flex; align-items: center; gap: 3px; z-index: 5;
+  background: var(--ink); border-radius: 20px; padding: 4px; box-shadow: 0 2px 10px rgba(0,0,0,0.22);
+  animation: quote-pop-in 0.1s ease-out;
+}
+.select-icon-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 50%; border: none; background: transparent;
+  color: var(--surface); font-size: 17px; line-height: 1; cursor: pointer; font-family: inherit;
+}
+.select-icon-btn:hover { background: rgba(255,255,255,0.18); }
+@keyframes quote-pop-in { from { opacity: 0; transform: translate(-50%, -110%); } to { opacity: 1; transform: translate(-50%, -130%); } }
+
+/* Persistent highlight left on text after the highlighter-pen button is
+   clicked, via the CSS Custom Highlight API (no DOM mutation, so it
+   survives React re-renders). */
+::highlight(quote-mark) { background-color: #ffe27a; color: #3d3208; }
 
 /* ---------- Progress rail ---------- */
 .rail { display: flex; align-items: center; gap: 0; margin: 30px 0 6px; }
@@ -335,7 +307,12 @@ textarea::placeholder { color: var(--ink-faint); }
 .rec-card { background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
 .rec-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
 .rec-tag { font-size: 10.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-faint); }
-.rec-text { font-size: 17px; line-height: 1.5; font-weight: 600; letter-spacing: -0.01em; }
+.rec-text { font-size: 17px; line-height: 1.5; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 14px; }
+.rec-points { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+.rec-point { display: grid; grid-template-columns: 20px 1fr; gap: 10px; font-size: 13.5px; line-height: 1.55; color: var(--ink-soft); }
+.rec-point .num { font-size: 11px; font-weight: 700; color: var(--ink-faint); padding-top: 2px; }
+.rec-restate { font-size: 13.5px; line-height: 1.5; color: var(--ink); padding-top: 12px; border-top: 1px solid var(--line); font-style: italic; }
+.rec-hint { font-size: 11px; color: var(--ink-faint); margin-top: 14px; text-align: center; }
 
 /* ---------- Bell curve gauge ---------- */
 .curve { display: flex; align-items: center; gap: 10px; cursor: help; }
@@ -348,17 +325,33 @@ textarea::placeholder { color: var(--ink-faint); }
 .msg-head { display: flex; align-items: center; gap: 11px; padding: 13px 16px; cursor: pointer; user-select: none; }
 .msg-head:hover { background: rgba(0,0,0,0.02); }
 .msg-badge { font-size: 11px; font-weight: 650; padding: 3px 11px; border-radius: 20px; border: 1px solid; letter-spacing: 0.01em; flex-shrink: 0; }
-.msg-summary { font-size: 14px; font-weight: 600; color: var(--ink); line-height: 1.45; flex: 1; min-width: 0; letter-spacing: -0.005em; }
+/* New mascot art is a self-contained colored circle (ring + character baked
+   into the image), so the badge just clips it into a perfect circle rather
+   than layering a separate CSS background/border behind it. Icon + role
+   name stacked, matching the .q-icon-stack pattern used in the human-turn
+   question cards, so every mascot appearance carries a visible label. */
+.msg-badge-stack { display: flex; flex-direction: column; align-items: center; gap: 5px; flex-shrink: 0; }
+.msg-badge-icon {
+  position: relative; flex-shrink: 0; width: 85px; height: 85px;
+  border-radius: 50%; overflow: hidden;
+}
+.msg-badge-mascot { object-fit: cover; }
+.msg-badge-name { font-size: 10.5px; font-weight: 650; text-transform: uppercase; letter-spacing: 0.02em; color: var(--ink-soft); text-align: center; white-space: nowrap; }
+.msg-summary { font-size: 13.5px; font-weight: 400; color: var(--ink-soft); line-height: 1.5; flex: 1; min-width: 0; }
 .msg-chevron { flex-shrink: 0; color: var(--ink-soft); transition: transform 0.25s; font-size: 20px; line-height: 1; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
 .msg.open .msg-chevron { transform: rotate(180deg); }
 .msg-body { display: none; }
 .msg.open .msg-body { display: block; }
-.msg-body-inner { padding: 2px 16px 16px; border-top: 1px solid var(--line); }
+.msg-body-inner { position: relative; padding: 2px 16px 16px; border-top: 1px solid var(--line); }
 .msg-error { font-size: 12.5px; color: #a32d2d; padding: 0 16px 14px; }
-.bullet { display: grid; grid-template-columns: 132px 1fr; gap: 10px; margin: 12px 0 0; align-items: start; }
-.bullet-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); padding-top: 2px; }
+/* Stacked "POINT N — Label:" header + paragraph, not a side-by-side grid —
+   the label reads as a plain-weight lead-in line, not a small-caps tag. A
+   full blank line separates the label from its paragraph, not just tight
+   line-leading. */
+.bullet { display: flex; flex-direction: column; gap: 10px; margin: 16px 0 0; }
+.bullet-label { font-size: 13.5px; font-weight: 600; color: var(--ink); }
 .bullet-body { font-size: 13.5px; line-height: 1.6; color: var(--ink); }
-.bullet-full { grid-column: 1 / -1; font-size: 13.5px; line-height: 1.6; color: var(--ink); }
+.bullet-full { font-size: 13.5px; line-height: 1.6; color: var(--ink); }
 .source-link { font-size: 11.5px; color: var(--ink-soft); text-decoration: underline; margin-left: 4px; }
 
 /* ---------- "See how we got here" disclosure ---------- */
@@ -378,8 +371,12 @@ textarea::placeholder { color: var(--ink-faint); }
 .human-title { font-size: 15px; font-weight: 650; margin-bottom: 4px; }
 .human-sub { font-size: 12.5px; color: var(--ink-soft); margin-bottom: 16px; line-height: 1.5; }
 .q-block { margin-bottom: 15px; }
-.q-label { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 7px; }
+.q-label { display: flex; align-items: center; gap: 10px; margin-bottom: 7px; }
 .q-badge { font-size: 10px; font-weight: 650; padding: 2px 9px; border-radius: 12px; border: 1px solid; flex-shrink: 0; margin-top: 1px; }
+.q-icon-stack { display: flex; flex-direction: column; align-items: center; gap: 3px; flex-shrink: 0; width: 115px; }
+.q-icon { position: relative; width: 100px; height: 100px; border-radius: 50%; overflow: hidden; }
+.q-icon-mascot { object-fit: cover; }
+.q-icon-name { font-size: 9.5px; font-weight: 650; text-transform: uppercase; letter-spacing: 0.02em; color: var(--ink-soft); text-align: center; }
 .q-text { font-size: 13px; color: var(--ink); line-height: 1.5; flex: 1; min-width: 0; }
 .q-input { width: 100%; font-size: 13px; padding: 9px 11px; border-radius: var(--radius-sm); border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); font-family: inherit; resize: vertical; min-height: 52px; }
 .q-input:focus { outline: none; border-color: #888; }
@@ -436,9 +433,5 @@ textarea::placeholder { color: var(--ink-faint); }
 .hidden { display: none !important; }
 
 @media (max-width: 560px) {
-  .node-avatar { width: 38px; height: 38px; font-size: 13px; }
-  .node-human .node-avatar { width: 42px; height: 42px; }
-  .node-label { font-size: 8.5px; }
-  .bullet { grid-template-columns: 100px 1fr; }
   .rail-step span { display: none; }
 }

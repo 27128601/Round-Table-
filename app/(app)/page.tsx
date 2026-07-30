@@ -37,6 +37,10 @@ export default function NewSessionPage() {
     });
   }, []);
 
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
+
   function changeLang(l: Lang) {
     setLang(l);
     try { localStorage.setItem('rt-lang', l); } catch { /* ignore */ }
@@ -136,11 +140,17 @@ export default function NewSessionPage() {
   return (
     <div className="wrap">
       <header>
-        <div className="lang-toggle">
-          <button className={`lang-btn${lang === 'en' ? ' on' : ''}`} onClick={() => changeLang('en')}>EN</button>
-          <button className={`lang-btn${lang === 'zh' ? ' on' : ''}`} onClick={() => changeLang('zh')}>中文</button>
+        <div className="brand-logo-tile">
+          <img src="/logo-e5876259.png" alt="The Round Table" className="brand-logo" />
+          <div className="brand-logo-text">
+            <span className="brand-logo-name">The Round Table</span>
+            <span className="brand-logo-slogan">Founding your founder dream</span>
+          </div>
+          <div className="lang-toggle">
+            <button className={`lang-btn${lang === 'en' ? ' on' : ''}`} onClick={() => changeLang('en')}>EN</button>
+            <button className={`lang-btn${lang === 'zh' ? ' on' : ''}`} onClick={() => changeLang('zh')}>中文</button>
+          </div>
         </div>
-        <div className="eyebrow">{t(lang, 'eyebrow')}</div>
         <h1>{t(lang, 'h1')}</h1>
         <p className="subtitle">{t(lang, 'subtitle')}</p>
       </header>

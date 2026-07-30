@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, getAuthedUser } from '@/lib/supabase/server';
 import { CLARIFY_SYSTEM } from '@/lib/prompts';
 import { callWithRetry, needsZhBackstop, translateBackstop, HAIKU_MODEL } from '@/lib/anthropic';
-import { ZH_INSTRUCTION, type Lang } from '@/lib/i18n';
+import { ZH_INSTRUCTION, NO_MD_INSTRUCTION, type Lang } from '@/lib/i18n';
 
 function parseClarify(text: string): string[] {
   if (/SUFFICIENT/i.test(text)) return [];
@@ -20,7 +20,7 @@ function parseClarify(text: string): string[] {
 // app/api/clarify/answer/route.ts), per §10.1.
 export async function POST(request: Request) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await getAuthedUser(supabase);
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
   const { sessionId } = (await request.json()) as { sessionId: string };
@@ -38,12 +38,12 @@ export async function POST(request: Request) {
   const fullBrief = [session.idea_text, attachmentsText].filter(Boolean).join('\n\n');
 
   try {
-    const system = CLARIFY_SYSTEM + (lang === 'zh' ? ZH_INSTRUCTION : '');
+    const system = CLARIFY_SYSTEM + (lang === 'zh' ? ZH_INSTRUCTION : NO_MD_INSTRUCTION);
     const { text } = await callWithRetry({
       model: HAIKU_MODEL,
       system,
       userContent: `The founder's brief:\n\n"${fullBrief}"`,
-      maxTokens: 220,
+      maxTokens: 140,
     });
     let finalText = text;
     if (lang === 'zh' && needsZhBackstop(finalText) && !/^SUFFICIENT/i.test(finalText.trim())) {

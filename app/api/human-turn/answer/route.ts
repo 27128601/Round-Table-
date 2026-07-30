@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, getAuthedUser } from '@/lib/supabase/server';
 import { chargeMessage, rateLimitResponseBody } from '@/lib/rateLimit';
 
 interface AnswerBody {
@@ -15,7 +15,7 @@ interface AnswerBody {
 // round has its own independent charge/no-charge outcome per §10.3.
 export async function POST(request: Request) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await getAuthedUser(supabase);
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
   const body = (await request.json()) as AnswerBody;

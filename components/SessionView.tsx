@@ -6,11 +6,11 @@ import type { AgentStep, SessionDetail, RoundRow } from '@/lib/types';
 import type { AgentId } from '@/lib/prompts';
 import type { Source } from '@/lib/anthropic';
 import RoundBlock from './RoundBlock';
+import RoundRail from './RoundRail';
 import AgentMessage from './AgentMessage';
-import BellCurve from './BellCurve';
+import RecommendationCard from './RecommendationCard';
 import CopyButton from './CopyButton';
-import { parseAlignment } from '@/lib/parseAlignment';
-import { buildTranscript } from '@/lib/buildTranscript';
+import { buildTranscript, buildRoundTranscript } from '@/lib/buildTranscript';
 import { agentLabel } from './AgentBadge';
 import HumanTurnCard from './HumanTurnCard';
 import ChoiceCard from './ChoiceCard';
@@ -61,10 +61,15 @@ export default function SessionView({ initial, autoStart }: { initial: SessionDe
   const [humanQuestions, setHumanQuestions] = useState<{ agentId: string; question: string }[] | null>(null);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [generatingPlan, setGeneratingPlan] = useState(false);
   const [markedRounds, setMarkedRounds] = useState<Set<string>>(new Set());
   const [rollingBack, setRollingBack] = useState(false);
   const startedRef = useRef(false);
   const askedRef = useRef(false);
+
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
 
   const sessionId = detail.session.id;
 
@@ -169,7 +174,9 @@ export default function SessionView({ initial, autoStart }: { initial: SessionDe
 
   async function handleWrapUp() {
     setBusy(true);
+    setGeneratingPlan(true);
     await fetchJson('/api/wrap-up', { sessionId });
+    setGeneratingPlan(false);
     setBusy(false);
     await refetchDetail();
   }
@@ -248,18 +255,27 @@ export default function SessionView({ initial, autoStart }: { initial: SessionDe
   return (
     <div className="wrap">
       <header>
-        <div className="lang-toggle">
-          <button className={`lang-btn${lang === 'en' ? ' on' : ''}`} onClick={() => changeLang('en')}>EN</button>
-          <button className={`lang-btn${lang === 'zh' ? ' on' : ''}`} onClick={() => changeLang('zh')}>中文</button>
+        <div className="brand-logo-tile">
+          <img src="/logo-e5876259.png" alt="The Round Table" className="brand-logo" />
+          <div className="brand-logo-text">
+            <span className="brand-logo-name">The Round Table</span>
+            <span className="brand-logo-slogan">Founding your founder dream</span>
+          </div>
+          <div className="lang-toggle">
+            <button className={`lang-btn${lang === 'en' ? ' on' : ''}`} onClick={() => changeLang('en')}>EN</button>
+            <button className={`lang-btn${lang === 'zh' ? ' on' : ''}`} onClick={() => changeLang('zh')}>中文</button>
+          </div>
         </div>
-        <div className="eyebrow">{t(lang, 'eyebrow')}</div>
         <p className="tagline">{t(lang, 'h1')}</p>
-        <h1 style={{ fontSize: 20 }}>{detail.session.title}</h1>
-        <p className="subtitle">{detail.session.idea_text}</p>
       </header>
 
       <TrinityStage lang={lang} />
+      {/* The founder's own idea, shown the same way it looked while they were
+          typing it — a disabled textarea below the table, not a heading —
+          matching the original prototype's persistent input. */}
+      <textarea className="idea-recap" value={detail.session.title} readOnly rows={2} />
       <StepTracker lang={lang} currentStepId={currentStepId} />
+      <RoundRail lang={lang} currentStepId={currentStepId} />
 
       {rateLimited && <RateLimitBanner lang={lang} />}
 
@@ -273,22 +289,26 @@ export default function SessionView({ initial, autoStart }: { initial: SessionDe
         <div className="btn-row"><button className="btn" onClick={() => runRound('initial')}>{t(lang, 'seat')}</button></div>
       )}
 
-      {rounds.map((r) => (
-        <RoundDivider key={r.id} label={roundLabel(r, lang)}>
-          <RoundBlock
-            round={r}
+      {rounds.map((r) => {
+        const label = roundLabel(r, lang);
+        return (
+          <RoundDivider
+            key={r.id}
+            label={label}
             lang={lang}
-            onReply={handleReply}
             marked={markedRounds.has(r.id)}
             checkpointDisabled={busy || rollingBack}
             onToggleMark={() => toggleMark(r.id)}
             onReturnHere={() => rollbackTo(r.id)}
-          />
-        </RoundDivider>
-      ))}
+            getCopyText={() => buildRoundTranscript(r, label)}
+          >
+            <RoundBlock round={r} lang={lang} onReply={handleReply} />
+          </RoundDivider>
+        );
+      })}
 
       {liveRound && (
-        <RoundDivider label={liveRoundLabel(liveRound, lang)}>
+        <RoundDivider label={liveRoundLabel(liveRound, lang)} lang={lang}>
           <LiveRoundView live={liveRound} lang={lang} />
         </RoundDivider>
       )}
@@ -309,6 +329,10 @@ export default function SessionView({ initial, autoStart }: { initial: SessionDe
           onLetDebate={() => runRound('standalone')}
           onWrapUp={handleWrapUp}
         />
+      )}
+
+      {generatingPlan && (
+        <div className="status-line"><div className="spinner" />{t(lang, 'planning')}</div>
       )}
 
       {detail.plans.map((p) => <PlanCard key={p.id} plan={p} lang={lang} />)}
@@ -335,17 +359,44 @@ function liveRoundLabel(live: LiveRound, lang: Lang) {
   return t(lang, 'rSelf');
 }
 
-function RoundDivider({ label, children }: { label: string; children: React.ReactNode }) {
+// Mark / Return-here / Copy sit inline in the divider row itself (between
+// the label and the trailing rule), matching the original prototype's
+// round-divider layout — not a separate floating bar.
+function RoundDivider({
+  label, lang, children, marked, checkpointDisabled, onToggleMark, onReturnHere, getCopyText,
+}: {
+  label: string;
+  lang: Lang;
+  children: React.ReactNode;
+  marked?: boolean;
+  checkpointDisabled?: boolean;
+  onToggleMark?: () => void;
+  onReturnHere?: () => void;
+  getCopyText?: () => string;
+}) {
   return (
     <>
-      <div className="round-divider"><span>{label}</span></div>
+      <div className="round-divider">
+        <span>{label}</span>
+        {onToggleMark && (
+          <button className={`rd-btn${marked ? ' marked' : ''}`} disabled={checkpointDisabled} onClick={onToggleMark}>
+            {marked ? t(lang, 'marked') : t(lang, 'mark')}
+          </button>
+        )}
+        {marked && onReturnHere && (
+          <button className="rd-btn" disabled={checkpointDisabled} onClick={onReturnHere}>
+            {t(lang, 'returnHere')}
+          </button>
+        )}
+        {getCopyText && <CopyButton getText={getCopyText} lang={lang} className="rd-btn" />}
+      </div>
       {children}
     </>
   );
 }
 
 function LiveRoundView({ live, lang }: { live: LiveRound; lang: Lang }) {
-  const agents: AgentId[] = ['market', 'builder', 'investor'];
+  const agents: AgentId[] = ['visionary', 'builder', 'market', 'operator', 'storyteller'];
   return (
     <div className="round-block">
       {live.stage === 'grounding' && <div className="status-line"><div className="spinner" />{t(lang, 'stGrounding')}</div>}
@@ -362,18 +413,7 @@ function LiveRoundView({ live, lang }: { live: LiveRound; lang: Lang }) {
         <div className="status-line"><div className="spinner" />{t(lang, 'stAligning')}</div>
       )}
 
-      {live.alignmentText && (() => {
-        const { displayText, score, confidence } = parseAlignment(live.alignmentText);
-        return (
-          <div className="rec-card">
-            <div className="rec-top">
-              <span className="rec-tag">{t(lang, 'recTag')}</span>
-              {score !== null && confidence !== null && <BellCurve score={score} confidence={confidence} lang={lang} />}
-            </div>
-            <div className="rec-text">{displayText}</div>
-          </div>
-        );
-      })()}
+      {live.alignmentText && <RecommendationCard text={live.alignmentText} lang={lang} />}
 
       {live.stage === 'tactics' && (
         <div className="tactics-list">

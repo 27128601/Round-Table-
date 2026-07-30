@@ -1,0 +1,10 @@
+var R=require("../../../chunks/[turbopack]_runtime.js")("server/app/api/clarify/route.js")
+R.c("server/chunks/[root-of-the-server]__0jmy03z._.js")
+R.c("server/chunks/node_modules_next_1zdbrne._.js")
+R.c("server/chunks/[root-of-the-server]__0qx92qn._.js")
+R.c("server/chunks/_11yum5t._.js")
+R.c("server/chunks/node_modules_1zvcedj._.js")
+R.c("server/chunks/[root-of-the-server]__21becu7._.js")
+R.c("server/chunks/_next-internal_server_app_api_clarify_route_actions_11mbj2p.js")
+R.m(87981)
+module.exports=R.m(87981).exports

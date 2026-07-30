@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import AgentMessage from './AgentMessage';
-import BellCurve from './BellCurve';
-import { parseAlignment } from '@/lib/parseAlignment';
+import RecommendationCard from './RecommendationCard';
 import { t, type Lang } from '@/lib/i18n';
 import type { RoundRow } from '@/lib/types';
 
@@ -11,42 +10,19 @@ interface Props {
   round: RoundRow;
   lang: Lang;
   onReply?: (agentId: string, message: string, recentText: string) => Promise<string | null>;
-  marked?: boolean;
-  checkpointDisabled?: boolean;
-  onToggleMark?: () => void;
-  onReturnHere?: () => void;
 }
 
-export default function RoundBlock({ round, lang, onReply, marked, checkpointDisabled, onToggleMark, onReturnHere }: Props) {
+// Mark/Return-here/Copy for a round now live in the round divider itself
+// (SessionView.tsx's RoundDivider), matching the original prototype where
+// those controls sit inline in the divider row, not as a separate bar.
+export default function RoundBlock({ round, lang, onReply }: Props) {
   const [showRaw, setShowRaw] = useState(false);
 
   return (
     <div className="round-block">
-      {(onToggleMark || onReturnHere) && (
-        <div className={`checkpoint-bar${marked ? ' marked' : ''}`}>
-          <button className="checkpoint-btn" disabled={checkpointDisabled} onClick={onToggleMark}>
-            <span className="checkpoint-flag">⚑</span> {marked ? t(lang, 'marked') : t(lang, 'mark')}
-          </button>
-          {marked && (
-            <button className="checkpoint-btn checkpoint-return" disabled={checkpointDisabled} onClick={onReturnHere}>
-              ↩ {t(lang, 'returnHere')}
-            </button>
-          )}
-        </div>
+      {round.alignment_status === 'complete' && round.alignment_result && (
+        <RecommendationCard text={round.alignment_result} lang={lang} />
       )}
-
-      {round.alignment_status === 'complete' && round.alignment_result && (() => {
-        const { displayText, score, confidence } = parseAlignment(round.alignment_result);
-        return (
-          <div className="rec-card">
-            <div className="rec-top">
-              <span className="rec-tag">{t(lang, 'recTag')}</span>
-              {score !== null && confidence !== null && <BellCurve score={score} confidence={confidence} lang={lang} />}
-            </div>
-            <div className="rec-text">{displayText}</div>
-          </div>
-        );
-      })()}
 
       {round.alignment_status === 'failed' && (
         <div className="error-msg">{t(lang, 'totalFailure')}</div>

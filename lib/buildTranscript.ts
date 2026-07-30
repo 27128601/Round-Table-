@@ -1,6 +1,33 @@
 import { AGENTS } from './prompts';
 import { parseAlignment } from './parseAlignment';
-import type { SessionDetail } from './types';
+import type { SessionDetail, RoundRow } from './types';
+
+// Plain-text transcript of a single round, for the per-round "Copy" button
+// in the round divider — ported from the original single-file build's
+// copySection().
+export function buildRoundTranscript(round: RoundRow, label: string): string {
+  const lines: string[] = [label, '='.repeat(Math.min(label.length, 60)), ''];
+  if (round.alignment_result) {
+    const { conclusion, points, restate } = parseAlignment(round.alignment_result);
+    lines.push(`SHARED RECOMMENDATION: ${conclusion}`);
+    points.forEach((p, i) => lines.push(`  ${i + 1}. ${p}`));
+    if (restate) lines.push(restate);
+    lines.push('');
+  }
+  for (const it of round.initial_takes) {
+    const agent = AGENTS.find((a) => a.id === it.agentId);
+    lines.push(`[${(agent?.label || it.agentId).toUpperCase()}]`);
+    lines.push(it.text || it.error || '');
+    lines.push('');
+  }
+  for (const tac of round.tactics) {
+    const agent = AGENTS.find((a) => a.id === tac.agentId);
+    lines.push(`[${(agent?.label || tac.agentId).toUpperCase()} — TACTICS]`);
+    lines.push(tac.text || tac.error || '');
+    lines.push('');
+  }
+  return lines.join('\n').trim();
+}
 
 // Plain-text transcript of the whole session, for the "copy full
 // conversation" button — ported from the original single-file build's

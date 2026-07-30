@@ -1,11 +1,11 @@
-import { createClient } from '@/lib/supabase/server';
+import { createClient, getAuthedUser } from '@/lib/supabase/server';
 import { chargeMessage, MAX_MESSAGES } from '@/lib/rateLimit';
 import {
   AGENTS, AgentId, GROUNDING_SYSTEM, ALIGNMENT_SYSTEM, tacticsInstruction,
   agentReactionInstruction,
 } from '@/lib/prompts';
-import { buildCachedSystemBlocks, callWithRetry, needsZhBackstop, translateBackstop, HAIKU_MODEL, SONNET_MODEL, Source } from '@/lib/anthropic';
-import type { Lang } from '@/lib/i18n';
+import { buildCachedSystemBlocks, callWithRetry, generateAgentText, needsZhBackstop, translateBackstop, needsFormatBackstop, formatBackstop, needsScoreConfidence, scoreConfidenceBackstop, HAIKU_MODEL, SONNET_MODEL, Source } from '@/lib/anthropic';
+import { ZH_INSTRUCTION, NO_MD_INSTRUCTION, type Lang } from '@/lib/i18n';
 
 export const maxDuration = 60; // Vercel function timeout — see plan §"Core pipeline" for why this needs raising
 
@@ -34,9 +34,18 @@ async function localize(text: string, lang: Lang): Promise<string> {
   return text;
 }
 
+// Applied to every agent response (initial takes + tactics) after
+// localization: if the model dropped the required SUMMARY:/POINT N —
+// structure, run one corrective relabeling pass so the UI never has to
+// render an unlabeled paragraph dump.
+async function finalizeAgentText(text: string, lang: Lang): Promise<string> {
+  const localized = await localize(text, lang);
+  return needsFormatBackstop(localized) ? formatBackstop(localized) : localized;
+}
+
 export async function POST(request: Request) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await getAuthedUser(supabase);
   if (!user) return new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401 });
 
   const body = (await request.json()) as RoundBody;
@@ -135,14 +144,14 @@ export async function POST(request: Request) {
         await Promise.all(AGENTS.map(async (agent, idx) => {
           try {
             const system = buildCachedSystemBlocks(initialSharedPrefix, agent.system, lang);
-            const { text, sources } = await callWithRetry({
+            const { text, sources } = await generateAgentText({
               model: HAIKU_MODEL,
               system,
               userContent: kind === 'reaction' ? `${agentReactionInstruction(agent)} ${initialUserMessage}` : initialUserMessage,
-              maxTokens: 500,
+              maxTokens: 400, // trimmed alongside the 3->2 point cut below — this pass is raw material for alignment + an optional collapsed "see how we got here" view, not the polished output (tactics is)
               withSearch: false,
             });
-            const localized = await localize(text, lang);
+            const localized = await finalizeAgentText(text, lang);
             const result: AgentStepResult = { agentId: agent.id, status: 'complete', text: localized, sources };
             initialResults[idx] = result;
             send({ event: 'initial-take', ...result });
@@ -175,11 +184,14 @@ export async function POST(request: Request) {
         try {
           const { text } = await callWithRetry({
             model: SONNET_MODEL,
-            system: ALIGNMENT_SYSTEM,
+            system: ALIGNMENT_SYSTEM + (lang === 'zh' ? ZH_INSTRUCTION : NO_MD_INSTRUCTION),
             userContent: `Idea: "${session.idea_text}"\n\nDebate:\n${debateText}`,
-            maxTokens: 400,
+            maxTokens: 500,
           });
           alignmentText = await localize(text, lang);
+          if (needsScoreConfidence(alignmentText)) {
+            alignmentText = await scoreConfidenceBackstop(alignmentText);
+          }
         } catch {
           await supabase.from('rounds').update({ alignment_status: 'failed' }).eq('id', roundId);
           send({ event: 'total-failure', message: 'The table could not reach a shared recommendation this round.' });
@@ -214,14 +226,14 @@ export async function POST(request: Request) {
         await Promise.all(AGENTS.map(async (agent, idx) => {
           try {
             const system = buildCachedSystemBlocks(tacticsSharedPrefix, tacticsInstruction(agent), lang);
-            const { text, sources } = await callWithRetry({
+            const { text, sources } = await generateAgentText({
               model: HAIKU_MODEL,
               system,
               userContent: 'Give your role-specific tactics in support of the shared recommendation.',
               maxTokens: 450,
               withSearch: true,
             });
-            const localized = await localize(text, lang);
+            const localized = await finalizeAgentText(text, lang);
             const result: AgentStepResult = { agentId: agent.id, status: 'complete', text: localized, sources };
             tacticsResults[idx] = result;
             send({ event: 'tactics', ...result });

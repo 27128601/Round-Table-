@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { agentLabel } from './AgentBadge';
+import { AGENTS } from '@/lib/prompts';
 import { t, type Lang } from '@/lib/i18n';
 import MicButton from './MicButton';
 
@@ -24,11 +26,17 @@ export default function HumanTurnCard({
   const canSend = Object.values(answers).some((v) => v.trim()) || generalNote.trim();
 
   function renderQ(q: Question) {
+    const agent = AGENTS.find((a) => a.id === q.agentId);
     return (
       <div className="q-block" key={q.agentId}>
         <div className="q-label">
-          <span className="q-badge" style={{ background: 'var(--surface)', borderColor: 'var(--line-strong)', color: 'var(--ink-soft)' }}>
-            {agentLabel(q.agentId, lang)}
+          <span className="q-icon-stack">
+            {agent ? (
+              <span className="q-icon">
+                <Image src={agent.mascot} alt={agentLabel(q.agentId, lang)} fill sizes="100px" className="q-icon-mascot" />
+              </span>
+            ) : null}
+            <span className="q-icon-name">{agentLabel(q.agentId, lang)}</span>
           </span>
           <span className="q-text">{q.question}</span>
         </div>

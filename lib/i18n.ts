@@ -4,8 +4,8 @@ export const STR = {
   eyebrow: { en: 'The Round Table', zh: '圆桌会议' },
   h1: { en: 'Is your problem worth solving?', zh: '你的问题值得解决吗？' },
   subtitle: {
-    en: 'Three role-specialized agents — Market, Builder, Investor — debate your idea, then align on one shared recommendation. The original disagreement stays visible if you want to see how they got there.',
-    zh: '市场、构建者与投资人三位角色化智能体审视你的想法，随后收敛为一条共同建议。原始分歧依然可见，供你了解结论是如何得出的。',
+    en: 'Five role-specialized agents — Visionary, Builder, Market, Operator, Storyteller — debate your idea, then align on one shared recommendation. The original disagreement stays visible if you want to see how they got there.',
+    zh: '远见者、构建者、市场、运营者与叙事者五位角色化智能体审视你的想法，随后收敛为一条共同建议。原始分歧依然可见，供你了解结论是如何得出的。',
   },
   ideaPh: { en: 'Describe your idea, problem, or early concept. The more context you give, the sharper the debate.', zh: '描述你的想法、问题或早期概念。给的背景越多，辩论越锋利。' },
   attach: { en: '📎 Attach notes (.txt / .md / .pdf / .docx)', zh: '📎 附加笔记 (.txt / .md / .pdf / .docx)' },
@@ -35,12 +35,13 @@ export const STR = {
   replying: { en: 'is replying…', zh: '正在回复…' },
   planning: { en: 'Drawing up your plan…', zh: '正在拟定计划…' },
   recTag: { en: 'Shared recommendation', zh: '共同建议' },
+  recHint: { en: "↓ Each advisor's full argument below", zh: '↓ 下方为各顾问完整论述' },
   tacticsTag: { en: "{n}'s tactics", zh: '{n}的具体做法' },
   seeHow: { en: 'See how we got here — the original debate', zh: '查看得出结论的过程 — 原始辩论' },
   humanTitle: { en: 'Answer the table', zh: '回应圆桌' },
   humanSub: {
-    en: "The three agents want to hear from you. Answer at least one question, or add a general note — you can't move on until the table hears something from you.",
-    zh: '三位智能体想听你回答。至少回答一个问题，或补充一条备注——圆桌听到你的声音之前无法继续。',
+    en: "The three advisors with the sharpest questions want to hear from you. Answer at least one question, or add a general note — you can't move on until the table hears something from you.",
+    zh: '问题最尖锐的三位顾问想听你回答。至少回答一个问题，或补充一条备注——圆桌听到你的声音之前无法继续。',
   },
   generalNotes: { en: 'General notes', zh: '补充备注' },
   generalPh: { en: 'Anything else — context, constraints, pushback…', zh: '其他信息——背景、限制、反驳……' },
@@ -68,6 +69,8 @@ export const STR = {
   copyFail: { en: 'Copy failed', zh: '复制失败' },
   downloadPdf: { en: '⬇ Download PDF report', zh: '⬇ 下载 PDF 报告' },
   generatingPdf: { en: 'Generating PDF…', zh: '正在生成 PDF…' },
+  quoteThis: { en: 'Quote this', zh: '引用' },
+  markThis: { en: 'Highlight', zh: '高亮' },
   reply: { en: '↩ Reply', zh: '↩ 回复' },
   replyTitle: { en: 'Talk to {n} directly — the rest of the table will remember it', zh: '直接与{n}对话——其余顾问也会记住这段交流' },
   threadPh: { en: 'Say it straight to {n} — correct a misread, push back, dig deeper…', zh: '直接对{n}说——纠正误读、提出反驳、继续深挖……' },
@@ -130,8 +133,8 @@ export const ZH_INSTRUCTION = `\n\n[CRITICAL LANGUAGE RULE — HIGHEST PRIORITY]
 
 Do NOT switch to English at any point, not even for a single word or clause inside a Chinese sentence. Do NOT borrow English terms or phrases — translate every concept into Chinese.
 
-When you refer to the other agents, use their Chinese names ONLY: 市场 (Market), 构建者 (Builder), 投资人 (Investor). Never write "Market", "Builder" or "Investor" in English.
+When you refer to the other agents, use their Chinese names ONLY: 远见者 (Visionary), 构建者 (Builder), 市场 (Market), 运营者 (Operator), 叙事者 (Storyteller). Never write agent names in English.
 
 The ONLY things allowed in English are the bare structural labels at the very start of a line (e.g. SUMMARY:, RECOMMENDATION:, TACTIC:, TITLE:, STEP:, RISK:, VALIDATE:, Q:, SUFFICIENT) and, for SCORE:/CONFIDENCE: lines specifically, the entire line stays in English exactly as instructed (a bare integer for SCORE:, and exactly one of LOW/MEDIUM/HIGH for CONFIDENCE:) — never translate these two lines. Write all other labels EXACTLY as shown — plain, with NO markdown. Everything after each other label must be Simplified Chinese.`;
 
-export const NO_MD_INSTRUCTION = `\n\nFORMAT: Output plain text only. Do NOT use markdown — no "#" or "##" headers, no asterisks, no bold. Write each structural label bare at the start of its line with nothing before it.`;
+export const NO_MD_INSTRUCTION = `\n\nFORMAT: Output plain text only. Do not use markdown: no "#" or "##" headers, no asterisks, no bold. Write each structural label bare at the start of its line with nothing before it. Never use an em-dash or hyphen to join two clauses in a sentence (the "X — Y" or "X - Y" construction); it reads as generic AI writing. Write in complete, natural sentences instead: split it into two sentences, or connect the thought with a plain word like "and," "because," "so," or "which." A hyphen inside a single normal compound word (like "well-known" or "early-stage") is fine, but joining two independent clauses with one is not.`;

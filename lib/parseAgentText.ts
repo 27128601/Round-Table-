@@ -48,7 +48,43 @@ export interface RenderedBullet {
   body: string;
 }
 
+// A label separator colon must fall within roughly the first N characters
+// after "POINT N — " to actually be the label/body divider — otherwise a
+// plain sentence like "...that evidence does two things: it proves..."
+// buried deep in the paragraph gets mistaken for one, turning the entire
+// paragraph into a bold "label" with the tail sheared off as its own
+// unlabeled bullet. (Bug seen in production: exactly this.)
+const MAX_LABEL_LEN = 60;
+
 export function renderBullets(bulletLines: string[]): RenderedBullet[] {
+  // Rejoin first: the model sometimes wraps a single point's paragraph
+  // across more than one physical line, and bulletLines is split strictly
+  // on '\n' — splitting per-line would fragment that one point into a
+  // mislabeled head + a stray unlabeled bullet. Segmenting the full text by
+  // "POINT N —" markers keeps each point's paragraph intact regardless of
+  // internal line breaks.
+  const text = bulletLines.join('\n');
+  const pointRe = /POINT\s*\d+\s*[—-]\s*/gi;
+  const matches = [...text.matchAll(pointRe)];
+
+  if (matches.length > 0) {
+    return matches.map((m, i) => {
+      const start = m.index! + m[0].length;
+      const end = i + 1 < matches.length ? matches[i + 1].index! : text.length;
+      const rest = text.slice(start, end).replace(/\s+/g, ' ').trim();
+      const ca = rest.indexOf(':');
+      const cb = rest.indexOf('：');
+      const ci = ca === -1 ? cb : cb === -1 ? ca : Math.min(ca, cb);
+      if (ci > -1 && ci < MAX_LABEL_LEN) {
+        return { label: rest.slice(0, ci).trim(), body: rest.slice(ci + 1).trim() };
+      }
+      return { label: null, body: rest };
+    });
+  }
+
+  // No "POINT N —" markers anywhere — fall back to the older "• Label: body"
+  // format (already-generated content) or fully unlabeled prose, one bullet
+  // block per line, same as before.
   return bulletLines.map((line) => {
     if (line.startsWith('•') || line.startsWith('-')) {
       const content = line.slice(1).trim();

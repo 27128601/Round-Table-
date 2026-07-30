@@ -43,8 +43,15 @@ export default function SignUpPage() {
   return (
     <div className="auth-shell">
       <div className="auth-card">
+        <div className="brand-logo-auth-tile">
+          <img src="/logo-e5876259.png" alt="The Round Table" className="brand-logo-auth" />
+          <div className="brand-logo-auth-text">
+            <span className="brand-logo-auth-name">The Round Table</span>
+            <span className="brand-logo-auth-slogan">Founding your founder dream</span>
+          </div>
+        </div>
         <div className="auth-title">Create account</div>
-        <div className="auth-sub">The Round Table — three agents, one shared recommendation.</div>
+        <div className="auth-sub">The Round Table — five agents, one shared recommendation.</div>
         <form onSubmit={handleSubmit}>
           <div className="auth-field">
             <label htmlFor="email">Email</label>
