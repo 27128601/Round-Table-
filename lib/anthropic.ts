@@ -147,7 +147,7 @@ export async function translateBackstop(text: string): Promise<string> {
 // occasionally drop the literal labels despite the instruction, which the UI
 // then renders as an unlabeled paragraph dump. Detect that and run one
 // cheap relabeling pass rather than shipping malformed output to the page.
-const POINT_LINE_RE = /^POINT\s*\d+\s*[—-]\s*.+:/im;
+const POINT_LINE_RE = /^POINT\s*\d+\s*[—–-]\s*.+[:：]/im;
 export function needsFormatBackstop(text: string) {
   const body = text || '';
   return !/^SUMMARY:/im.test(body) || !POINT_LINE_RE.test(body);
