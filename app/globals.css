@@ -286,7 +286,7 @@ textarea::placeholder { color: var(--ink-faint); }
 /* Persistent highlight left on text after the highlighter-pen button is
    clicked, via the CSS Custom Highlight API (no DOM mutation, so it
    survives React re-renders). */
-::highlight(quote-mark) { background-color: #ffe27a; color: #3d3208; }
+
 
 /* ---------- Progress rail ---------- */
 .rail { display: flex; align-items: center; gap: 0; margin: 30px 0 6px; }
