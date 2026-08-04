@@ -58,6 +58,6 @@ export async function getAuthedUser(supabase: Awaited<ReturnType<typeof createCl
     return await withTimeout(supabase.auth.getUser(), AUTH_CHECK_TIMEOUT_MS, 'Supabase auth check')
   } catch (err) {
     console.error('[auth] Supabase auth check failed or timed out:', err)
-    return { data: { user: null }, error: null } as Awaited<ReturnType<typeof supabase.auth.getUser>>
+    return { data: { user: null }, error: null } as unknown as Awaited<ReturnType<typeof supabase.auth.getUser>>
   }
 }
