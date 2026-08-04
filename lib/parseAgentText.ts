@@ -64,7 +64,7 @@ export function renderBullets(bulletLines: string[]): RenderedBullet[] {
   // "POINT N —" markers keeps each point's paragraph intact regardless of
   // internal line breaks.
   const text = bulletLines.join('\n');
-  const pointRe = /POINT\s*\d+\s*[—-]\s*/gi;
+  const pointRe = /POINT\s*\d+\s*[—–-]\s*/gi;
   const matches = [...text.matchAll(pointRe)];
 
   if (matches.length > 0) {
