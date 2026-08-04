@@ -29,7 +29,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${fredoka.variable} ${zcoolKuaiLe.variable}`}>
+   <html lang="en" className={`${fredoka.variable} ${zcoolKuaiLe.variable}`}>
+      <head>
+        <style dangerouslySetInnerHTML={{ __html: '::highlight(quote-mark) { background-color: #ffe27a; color: #3d3208; }' }} />
+      </head>
       <body>{children}</body>
     </html>
   );
